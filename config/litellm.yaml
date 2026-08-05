@@ -1,0 +1,86 @@
+# Hermes LiteLLM Gateway — capability routing
+# Phase 1 最小版（待触发再升级）:
+#   - Phase 2: litellm_settings 加 redis_url 引 Redis
+#   - Phase 3: success_callback 加 ["langfuse"]
+#
+# 路由原则：业务代码只引 capability alias，厂商集中在本文件配置。
+# 今天：fast = MiniMax-M3 / chinese = qwen-max / coding = deepseek-chat / vision = qwen-vl-max
+# 明天：换厂商只改这一文件。
+
+model_list:
+  # ---------- capability: fast ----------
+  # 默认 / 低成本 / aider / 多数任务
+  #   api_key: 取自 OPENAI_API_KEY（用户 ~/.题库分析/.env 中的 key）
+  #   model: custom_openai/MiniMax-M3（让 Litellm SDK 走 custom_openai provider 调 UIBE Maas OpenAI 兼容端点）
+  - model_name: MiniMax-M3
+    litellm_params:
+      model: custom_openai/MiniMax-M3
+      api_base: https://api.minimaxi.com/v1
+      api_key: os.environ/OPENAI_API_KEY
+  # 别名 fast：业务代码仍可用 fast，路由到 MiniMax-M3
+  - model_name: fast
+    litellm_params:
+      model: custom_openai/MiniMax-M3
+      api_base: https://api.minimaxi.com/v1
+      api_key: os.environ/OPENAI_API_KEY
+  # 别名 gpt-4o-mini：Aider/Cursor/Copilot 等工具嵌入 litellm SDK 认识的 OpenAI 标准 model 名
+  # 不然报 "LLM Provider NOT provided"
+  - model_name: gpt-4o-mini
+    litellm_params:
+      model: custom_openai/MiniMax-M3
+      api_base: https://api.minimaxi.com/v1
+      api_key: os.environ/OPENAI_API_KEY
+
+  # ---------- capability: reasoning ----------
+  # 复杂推理 / 长综述 / 决策建议
+  - model_name: reasoning
+    litellm_params:
+      model: anthropic/claude-sonnet-4-20250514
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  # ---------- capability: chinese ----------
+  # 中文生成 / 题目解析 / 中高考场景
+  - model_name: chinese
+    litellm_params:
+      model: openai/qwen-max
+      # 稳定内网端点，硬编码（不通过 yaml 变量展开）
+      api_base: https://llm-ecz0dfm8sux9p8y6.cn-beijing.maas.aliyuncs.com/compatible-mode/v1
+      api_key: os.environ/DASHSCOPE_API_KEY
+
+  # ---------- capability: coding ----------
+  # 代码任务 / aider / 自动化脚本
+  - model_name: coding
+    litellm_params:
+      model: openai/deepseek-chat
+      api_base: https://api.deepseek.com/v1
+      api_key: os.environ/DEEPSEEK_API_KEY
+
+  # ---------- capability: vision ----------
+  # 拍照 / 多模态
+  - model_name: vision
+    litellm_params:
+      model: openai/qwen-vl-max
+      api_base: https://llm-ecz0dfm8sux9p8y6.cn-beijing.maas.aliyuncs.com/compatible-mode/v1
+      api_key: os.environ/DASHSCOPE_API_KEY
+
+  # ---------- capability: local ----------
+  # 本地 Ollama（BioFLow 用 Qwen3-14b 此处统一入口）
+  #   Windows 原生 Ollama (D:\...) 暴露 11434 给 docker：
+  #     "host.docker.internal:11434" 是 docker 内 → host 的回环 DNS
+  #   tag: qwen3:14b-q4_K_M （4-bit 量化版，RTX 5060 8GB 显存刚好）
+  - model_name: local
+    litellm_params:
+      model: ollama/qwen3:14b-q4_K_M
+      api_base: http://host.docker.internal:11434
+
+router_settings:
+  num_retries: 2
+  timeout: 60
+  allowed_fails: 3
+  cooldown_time: 30
+
+litellm_settings:
+  drop_params: true
+  set_verbose: false
+  telemetry: false
+  # success_callback: []  # Phase 3 接 Langfuse 时改为 ["langfuse"]

@@ -1,0 +1,56 @@
+# Hermes infra — 最小可用基础设施 (Phase 1)
+# 演进路线:
+#   Phase 1 (现在):     LiteLLM
+#   Phase 2 (触发):     + Redis (需要 cache / rate limit / budget 时)
+#   Phase 3 (触发):     + Langfuse (需要调试 Agent 时)
+#   Phase 4 (触发):     + Qdrant (需要混合检索时)
+#
+# 启动: cd ~/infra && docker compose up -d
+# 停止: docker compose down
+# 日志: docker compose logs -f litellm
+# 健康: curl http://localhost:4000/health
+# 模型清单: curl http://localhost:4000/v1/models
+
+services:
+  litellm:
+    # 用 docker hub 上的官方镜像同步版（与 ghcr.io/berriai/litellm:main 同源，
+    # 但 docker hub 在国内网络链路更稳，避开 pkg-containers.githubusercontent.com EOF）
+    image: litellm/litellm:main-latest
+    container_name: hermes-litellm
+    restart: unless-stopped
+    # 必须用绝对路径：相对路径会被 Docker Desktop WSL2 集成的 bind-mount 解析成
+    # /run/desktop/mnt/host/wsl/docker-desktop-bind-mounts/Ubuntu/<临时 ID>，
+    # 每次重启 ID 失效导致 "no such file or directory" 错误
+    volumes:
+      - /home/cx/infra/config/litellm.yaml:/app/config.yaml:ro
+    env_file:
+      - /home/cx/infra/.env
+    environment:
+      - LITELLM_LOG=DEBUG
+      # 容器能直接出公网（Docker bridge 网络不依赖家用 LAN）
+      # 显式覆盖 base image 的 https_proxy=127.0.0.1:7897（不然连 127.0.0.1:7897 失败）
+      - HTTP_PROXY=
+      - HTTPS_PROXY=
+      - http_proxy=
+      - https_proxy=
+      - NO_PROXY=*
+      - no_proxy=*
+    # DNS 必须显式指定公网 — 不然 Sangfor VPN 抢路由后 DNS 会 timeout
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+      - 114.114.114.114
+    # WSL DNS resolver 整体被劫持 — 静态 host 解析绕过
+    extra_hosts:
+      - "api.minimaxi.com:60.28.220.199"
+      - "api.minimaxi.com:123.125.246.121"
+    ports:
+      # 只在 WSL 回环端口监听（不暴露外网/Windows 网段）
+      - "127.0.0.1:4000:4000"
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4000/health/liveliness"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s

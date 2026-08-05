@@ -1,0 +1,30 @@
+# Hermes infra — Git ignore
+
+# Real env with secrets
+.env
+db/
+*.log
+*.bak
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+
+# Network diagnostics snapshots（可能含敏感调试输出）
+network/snapshots/
+*.tmp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Hermes runtime
+.hermes/
+.claude/
