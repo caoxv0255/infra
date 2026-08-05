@@ -1,0 +1,23 @@
+{
+  "name": "Node.js Project (Generic)",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:20-bullseye",
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "ms-azuretools.vscode-docker"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "eslint.run": "onSave"
+      }
+    }
+  },
+  "postCreateCommand": "npm install -g npm@latest",
+  "remoteUser": "node"
+}

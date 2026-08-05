@@ -1,0 +1,33 @@
+{
+  "name": "aitutor (Node + Express + Postgres + pgvector + AGE)",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:20-bullseye",
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/postgres:1": {
+      "version": "15"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "ms-azuretools.vscode-docker",
+        "ckolkman.vscode-postgres",
+        "humao.rest-client"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "files.associations": {
+          "*.js": "javascript"
+        }
+      }
+    }
+  },
+  "postCreateCommand": "echo 'aitutor devcontainer ready. cd /workspaces/aitutor; npm install; docker compose up -d pgvector'",
+  "forwardPorts": [3000, 5432],
+  "remoteUser": "node",
+  "features_extension": {
+    "comment": "aitutor 用 Docker 跑 pgvector 扩展 — postgres:15 image + 初始化 SQL"
+  }
+}

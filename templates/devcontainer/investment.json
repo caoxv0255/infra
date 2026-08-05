@@ -1,0 +1,26 @@
+{
+  "name": "investment (Python + DuckDB + akshare)",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11-bullseye",
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff",
+        "RandomFractalsInc.vscode-data-preview"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "editor.formatOnSave": true
+      }
+    }
+  },
+  "postCreateCommand": "pip install duckdb akshare tushare pandas fastapi uvicorn",
+  "forwardPorts": [8000, 4000],
+  "remoteUser": "vscode",
+  "comment": "forwardPorts: 8000=investment backend, 4000=litellm gateway"
+}
