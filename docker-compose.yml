@@ -15,7 +15,10 @@ services:
   litellm:
     # 用 docker hub 上的官方镜像同步版（与 ghcr.io/berriai/litellm:main 同源，
     # 但 docker hub 在国内网络链路更稳，避开 pkg-containers.githubusercontent.com EOF）
-    image: litellm/litellm:main-latest
+    image: litellm/litellm@sha256:76d036d18bb352ac3b4e0a84d5892b2cb2fe472e305bf2ac0619aef97fe6ced0
+    # Pinned to digest 2026-08-11 — 防止 :main-latest 浮动 tag 导致 Docker Desktop
+    # 后台 pull 新 image 后替换 container。升级需手动: docker pull + 更新 digest。
+    # 查询当前 digest: docker inspect hermes-litellm --format '{{.Image}}'
     container_name: hermes-litellm
     restart: unless-stopped
     # 必须用绝对路径：相对路径会被 Docker Desktop WSL2 集成的 bind-mount 解析成
